@@ -26,7 +26,7 @@ maxtime = 500;
 
 % define strategy numbers and thresholds
 strategies = [1:6];
-thresholds = [1600 7500; 1200 2000; 2500 4500; 4000 7000; 600 9000; 6000 9000];
+thresholds = [1600 7500; 1200 2000; 2500 4500; 4000 7000; 600 9000; 4000 9000];
 
 % arrays to store lockdown metrics
 [Days_lockdown, Peak_incidence, Last_lockdown, NPhases] = deal([]);
@@ -35,7 +35,7 @@ figure('Position',[400 400 1000 1000])
 
 for strat = 1:6
     % Define model parameters as a structure
-    para = struct('beta',beta,'gamma',gamma,'sigma',sigma,'N',N,'n',n,'strategy',strat);
+    para = struct('beta',beta,'gamma',gamma,'sigma',sigma,'N',N,'n',n,'strategy',strat,'init',1);
 
     % dummy thresholds to allow infections to build with no intervention
     para.Imin = 20000;
@@ -44,22 +44,27 @@ for strat = 1:6
     para.Imax_risk = para.Imax*atrisk_prop;
 
     % Define initial conditions as a structure
-    E0 = 0.001;  % initial exposed
-    ICs = struct('S',(1-E0).*para.N, 'E',E0.*para.N, 'I',zeros(n,1), 'R',zeros(n,1));
+    E0 = 0.0015;  % initial exposed
+    ICs = struct('S',(1-E0).*para.N, 'E1',E0.*para.N, 'E2',zeros(n,1), 'E3',zeros(n,1), ...
+                 'I',zeros(n,1), 'R',zeros(n,1));
 
     % Preliminary run - allows us to get ICs to begin in lockdown
-    [Prelim] = SEIR_demo(para,ICs,30);
+    %[Prelim] = SEIR_demo_NBD(para,ICs,30);
+    [Prelim] = SEIR_demo(para,ICs,25);
 
     % add control thresholds defined by strategy
     para.Imin = thresholds(strat,1);
     para.Imax = thresholds(strat,2);
     para.Imin_risk = para.Imin*atrisk_prop;
     para.Imax_risk = para.Imax*atrisk_prop;
+    para.init = 0;
 
     % Get new initial conditions to begin in lockdown
-    ICs = struct('S',Prelim.S(end,:), 'E',Prelim.E(end,:), 'I',Prelim.I(end,:), 'R',Prelim.R(end,:));
+    ICs = struct('S',Prelim.S(end,:), 'E1',Prelim.E1(end,:), 'E2',Prelim.E2(end,:), ...
+                 'E3',Prelim.E3(end,:), 'I',Prelim.I(end,:), 'R',Prelim.R(end,:));
 
     % Run model
+    %[Classes] = SEIR_demo_NBD(para,ICs,maxtime);
     [Classes] = SEIR_demo(para,ICs,maxtime);
 
     % Find times where social distancing is enforced
@@ -109,8 +114,23 @@ for strat = 1:6
     %saveas(gcf,strcat('./images/Strat_',num2str(strat),'.png'))
 end
 
+% I have been using this figure to check the total age cohort sizes remain
+% constant
+%figure(2)
+%for j = 1:3
+%    plot(Classes.t, Classes.S(:,j) + Classes.E1(:,j) + Classes.E1(:,j) + Classes.E1(:,j) + Classes.I(:,j) + Classes.R(:,j))
+%    hold on
+%end
+%legend({'0-19','20-64','65+'})
+%axis([0 maxtime para.N(3)-10 para.N(3)+10])
+%grid on
+
 %save figure
 saveas(gcf,strcat('./images/Strats.png'))
+
+%figure(2)
+%plot(Prelim.t, sum(Prelim.I,2))
+%grid on
 
 % save metrics to table
 save("./mats/metrics.mat","Days_lockdown","Last_lockdown","NPhases","Peak_incidence","strategies")
