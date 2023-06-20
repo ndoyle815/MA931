@@ -6,7 +6,7 @@
 function [Classes] = SEIR_demo(para,ICs,maxtime)
 
 %Run ODE using ODE45
-SD = [0,1];
+SD = [0,para.init];
 opts = odeset('RelTol',1e-5,'MaxStep',0.1);
 [t, pop] = ode45(@diff_SEIR_model, [0:1:maxtime], [ICs.S ICs.E1 ICs.E2 ICs.E3 ICs.IS ICs.IA ICs.R ICs.Cases], opts, para);
 
@@ -35,14 +35,14 @@ Cases = pop(7*para.n+1 : 8*para.n);
 % "social distancing" control: 70% decrease in contact rates if total infections
 % above a given threshold
 if SD(end,2) == 0
-    if sum(IS) > para.Imax% || I(end) > para.Imax_risk
+    if sum(IS) > para.Imax && t - SD(end,1) > para.tgap% || I(end) > para.Imax_risk
         factor = 0.3;
         SD(end+1,:) = [t,1];
     else
         factor = 1;
     end
 else
-    if sum(IS) < para.Imin% && I(end) < para.Imin_risk
+    if sum(IS) < para.Imin && t - SD(end,1) > para.tgap% && I(end) < para.Imin_risk
         factor = 1;
         SD(end+1,:) = [t,0];
     else

@@ -36,7 +36,7 @@ figure('Position',[400 400 1000 1000])
 for strat = 1:6
     % Define model parameters as a structure
     para = struct('beta',beta,'gamma',gamma,'sigma',sigma,'tau',tau,'da',da, ...
-                'N',N,'n',n,'strategy',strat);
+                'N',N,'n',n,'strategy',strat,'init',0,'tgap',21);
 
     % dummy thresholds to allow infections to build with no intervention
     para.Imin = 20000;
@@ -55,6 +55,7 @@ for strat = 1:6
     [Prelim] = SEIR_demo(para,ICs,t_init);
 
     % add control thresholds defined by strategy
+    para.init = 1;
     para.Imin = thresholds(strat,1);
     para.Imax = thresholds(strat,2);
     para.Imin_risk = para.Imin*atrisk_prop;
