@@ -8,6 +8,9 @@ set(groot,'defaultAxesTickLabelInterpreter','latex')
 set(0,'defaultTextInterpreter','latex')
 set(0,'defaultaxesfontsize',16)
 
+load mats/Distributions.mat
+load mats/Probabilities.mat
+
 % model parameters
 gamma = 1/7;                     % infectious period
 sigma = 1/5;                     % latency period
@@ -46,13 +49,13 @@ for strat = 1:6
     para.Imax_risk = para.Imax*atrisk_prop;
 
     % Define initial conditions as a structure
-    E0 = 0.015;  % initial exposed
+    E0 = 0.01;  % initial exposed
     ICs = struct('S',(1-E0).*para.N, 'E1',E0.*para.N, 'E2',zeros(n,1), 'E3',zeros(n,1), ...
                  'IS',zeros(n,1), 'IA',zeros(n,1), 'R',zeros(n,1), 'Cases',zeros(n,1));
 
     % Preliminary run - allows us to get ICs to begin in lockdown
     %[Prelim] = SEIR_demo_NBD(para,ICs,30);
-    t_init = 22;
+    t_init = 30;
     [Prelim] = SEIR_demo(para,ICs,t_init);
 
     % add control thresholds defined by strategy
@@ -77,10 +80,16 @@ for strat = 1:6
     % Compute daily new infections, hospitalisations and deaths
     hosp_rates = [0.1; 0.15; 0.3];
     death_rates = [0.001; 0.01; 0.1];
-    hosp_lag = 5;
-    Classes.DailyInf = [Prelim.Cases(2:end,:) - Prelim.Cases(1:end-1,:); Classes.Cases(2:end,:) - Classes.Cases(1:end-1,:)];
-    hh = Classes.DailyInf*hosp_rates;
-    Classes.Hospital = hh(t_init-hosp_lag:end-hosp_lag);
+    %hosp_lag = 5;
+    
+    Classes.DailyInf = [0 0 0; Prelim.Cases(2:end,:) - Prelim.Cases(1:end-1,:); Classes.Cases(2:end,:) - Classes.Cases(1:end-1,:)];
+    HH = Classes.DailyInf*hosp_rates;
+    newHH = zeros(maxtime+t_init+1,1);
+    lag = [0:length(Distribution_Symptoms_to_Hospital)-1];
+    for t = t_init+1:length(newHH)
+        newHH(t) = newHH(t) + Distribution_Symptoms_to_Hospital*HH(t-lag);
+    end
+    Classes.Hospital = newHH(t_init+1:end);
     Classes.Deaths = Classes.DailyInf*death_rates;
 
     DL = 0;
@@ -110,7 +119,7 @@ for strat = 1:6
     if mod(strat,2) == 1
         ylabel('Infected Individuals')
     end
-    title(strcat("Strategy ",num2str(strat)))
+    title(strcat("Strategy S",num2str(strat)))
     axis([0 maxtime 0 max([10000,1.15*max(sum(Classes.IS,2))])])
     grid on
 
@@ -118,7 +127,7 @@ for strat = 1:6
     Peak_incidence = [Peak_incidence round(max(sum(Classes.IS,2)))];
     Peak_hospital = [Peak_hospital round(max(Classes.Hospital))];
     FinalSize = [FinalSize round(sum(Classes.R(end,:)))];
-    FinalHospital = [FinalHospital round(Classes.Cases(end,:)*hosp_rates)];
+    FinalHospital = [FinalHospital round(sum(Classes.Hospital))];
     FinalDeaths = [FinalDeaths round(Classes.Cases(end,:)*death_rates)];
     %Days_over_x
     %Days_over_y
