@@ -35,20 +35,39 @@ Cases = pop(7*para.n+1 : 8*para.n);
 % "social distancing" control: 70% decrease in contact rates if total infections
 % above a given threshold
 if SD(end,2) == 0
+    factor = 1;
     if sum(IS) > para.Imax && t - SD(end,1) > para.tgap% || I(end) > para.Imax_risk
-        factor = 0.3;
-        SD(end+1,:) = [t,1];
-    else
-        factor = 1;
+        SD(end+1,:) = [t,0.5];
+    end
+elseif SD(end,2) == 1
+    factor = 0.3;
+    if sum(IS) < para.Imin && t - SD(end,1) > para.tgap% && I(end) < para.Imin_risk
+        SD(end+1,:) = [t,0.5];
     end
 else
-    if sum(IS) < para.Imin && t - SD(end,1) > para.tgap% && I(end) < para.Imin_risk
-        factor = 1;
-        SD(end+1,:) = [t,0];
-    else
-        factor = 0.3;
+    factor = 1 - 0.7*SD(end-1,2); % = 1 if previous state 0 or 0.3 if previous state 1
+    if t - SD(end,1) > para.tdelay
+        SD(end+1,:) = [t,1-SD(end-1,2)];
     end
 end
+
+% if SD(end,2) == 0
+%     if sum(IS) > para.Imax && t - SD(end,1) > para.tgap% || I(end) > para.Imax_risk
+%         factor = 0.3;
+%         SD(end+1,:) = [t,1];
+%     else
+%         factor = 1;
+%     end
+% else
+%     if sum(IS) < para.Imin && t - SD(end,1) > para.tgap% && I(end) < para.Imin_risk
+%         factor = 1;
+%         SD(end+1,:) = [t,0];
+%     else
+%         factor = 0.3;
+%     end
+% end
+
+%factor = 1 - 0.7*SD(end,1); % = 1 if previous state 0 or 0.3 if previous state 1
 
 % ODE equations
 dS = -factor.*S.*(para.beta*(IS + para.tau.*IA))./para.N;

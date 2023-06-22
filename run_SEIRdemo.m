@@ -33,10 +33,11 @@ thresholds = [1500 6000; 1000 2000; 2000 4000; 4000 6000; 1000 8000; 4000 8000];
 
 figure('Position',[400 400 1000 1000])
 
+tic
 for strat = 1:6
     % Define model parameters as a structure
     para = struct('beta',beta,'gamma',gamma,'sigma',sigma,'tau',tau,'da',da, ...
-                'N',N,'n',n,'strategy',strat,'init',0,'tgap',21);
+                'N',N,'n',n,'strategy',strat,'init',0,'tgap',16,'tdelay',5);
 
     % dummy thresholds to allow infections to build with no intervention
     para.Imin = 20000;
@@ -45,13 +46,13 @@ for strat = 1:6
     para.Imax_risk = para.Imax*atrisk_prop;
 
     % Define initial conditions as a structure
-    E0 = 0.01;  % initial exposed
+    E0 = 0.015;  % initial exposed
     ICs = struct('S',(1-E0).*para.N, 'E1',E0.*para.N, 'E2',zeros(n,1), 'E3',zeros(n,1), ...
                  'IS',zeros(n,1), 'IA',zeros(n,1), 'R',zeros(n,1), 'Cases',zeros(n,1));
 
     % Preliminary run - allows us to get ICs to begin in lockdown
     %[Prelim] = SEIR_demo_NBD(para,ICs,30);
-    t_init = 30;
+    t_init = 22;
     [Prelim] = SEIR_demo(para,ICs,t_init);
 
     % add control thresholds defined by strategy
@@ -76,8 +77,10 @@ for strat = 1:6
     % Compute daily new infections, hospitalisations and deaths
     hosp_rates = [0.1; 0.15; 0.3];
     death_rates = [0.001; 0.01; 0.1];
+    hosp_lag = 5;
     Classes.DailyInf = [Prelim.Cases(2:end,:) - Prelim.Cases(1:end-1,:); Classes.Cases(2:end,:) - Classes.Cases(1:end-1,:)];
-    Classes.Hospital = Classes.DailyInf*hosp_rates;
+    hh = Classes.DailyInf*hosp_rates;
+    Classes.Hospital = hh(t_init-hosp_lag:end-hosp_lag);
     Classes.Deaths = Classes.DailyInf*death_rates;
 
     DL = 0;
@@ -86,12 +89,17 @@ for strat = 1:6
     %figure('Position',[400 400 600 400])
     %clf
     subplot(3,2,strat)
-    for i = 1:2:nx
-        DL = DL + Classes.SD(i+1,1) - Classes.SD(i,1);
-        patch([Classes.SD(i,1) Classes.SD(i,1) Classes.SD(i+1,1) Classes.SD(i+1,1)], [0 20000 20000 0], 'r', 'Facealpha',0.3, 'EdgeAlpha',0)
+    for i = 1:4:nx
+        DL = DL + Classes.SD(i+2,1) - Classes.SD(i,1);
+        patch([Classes.SD(i,1) Classes.SD(i,1) Classes.SD(i+2,1) Classes.SD(i+2,1)], [0 20000 20000 0], 'r', 'Facealpha',0.3, 'EdgeAlpha',0)
         hold on
     end
     plot(Classes.t, sum(Classes.IS,2), 'k', 'LineWidth', 2.5)
+    %hold on
+    %plot(Classes.t, 10.*Classes.Hospital, 'b', 'LineWidth', 2.5)
+    %plot(Classes.t, Classes.IS(:,3)./sum(Classes.IS,2).*10000, 'b', 'LineWidth', 2.5)
+    %hold on
+    %plot(Classes.t, Classes.IA(:,3)./sum(Classes.IA,2).*10000, 'g', 'LineWidth', 2.5)
     hold on
     yline(para.Imax,':','Upper Threshold')
     hold on
@@ -114,13 +122,14 @@ for strat = 1:6
     FinalDeaths = [FinalDeaths round(Classes.Cases(end,:)*death_rates)];
     %Days_over_x
     %Days_over_y
-    Last_lockdown = [Last_lockdown floor(Classes.SD(end,1))];
+    Last_lockdown = [Last_lockdown round(Classes.SD(end,1))];
     Days_lockdown = [Days_lockdown round(DL)];
-    NPhases = [NPhases nx];
-
+    NPhases = [NPhases ceil(nx/2)];
+    
     %save figure
     %saveas(gcf,strcat('./images/Strat_',num2str(strat),'.png'))
 end
+toc
 
 % I have been using this figure to check the total age cohort sizes remain
 % constant
