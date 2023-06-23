@@ -14,6 +14,7 @@ load mats/Probabilities.mat
 % model parameters
 gamma = 1/7;                     % infectious period
 sigma = 1/5;                     % latency period
+omega = 1/200;                   % recovered period
 tau = 0.25;                      % relative infectiousness of asymptomatic
 da = [0.05; 0.2; 0.7];           % probability of symptomatic infection
 N = 3.*[50000; 125000; 40000];   % population structure
@@ -25,7 +26,8 @@ atrisk_prop = N(end)/sum(N);     % at-risk proportion of population
 beta = 1.0.*[1.35, 2.41, 0.3; 0.93, 3.01, 0.54; 0.35, 1.64, 1.21].*gamma;
 
 % Define time to run model for
-maxtime = 600;
+t_init = 30;    % preliminary run
+maxtime = 600;  % main simulation
 
 % define strategy numbers and thresholds
 strategies = [1:6];
@@ -39,8 +41,9 @@ figure('Position',[400 400 1000 1000])
 tic
 for strat = 1:6
     % Define model parameters as a structure
-    para = struct('beta',beta,'gamma',gamma,'sigma',sigma,'tau',tau,'da',da, ...
-                'N',N,'n',n,'strategy',strat,'init',0,'tgap',16,'tdelay',5);
+    para = struct('beta',beta,'gamma',gamma,'sigma',sigma,'omega',omega,'tau',tau, ...
+                  'da',da,'N',N,'n',n,'strategy',strat,'init',0,'maxtime',t_init, ...
+                  'tgap',16,'tdelay',5);
 
     % dummy thresholds to allow infections to build with no intervention
     para.Imin = 20000;
@@ -55,11 +58,11 @@ for strat = 1:6
 
     % Preliminary run - allows us to get ICs to begin in lockdown
     %[Prelim] = SEIR_demo_NBD(para,ICs,30);
-    t_init = 30;
-    [Prelim] = SEIR_demo(para,ICs,t_init);
+    [Prelim] = SEIR_demo(para,ICs);
 
     % add control thresholds defined by strategy
     para.init = 1;
+    para.maxtime = maxtime;
     para.Imin = thresholds(strat,1);
     para.Imax = thresholds(strat,2);
     para.Imin_risk = para.Imin*atrisk_prop;
@@ -72,7 +75,7 @@ for strat = 1:6
 
     % Run model
     %[Classes] = SEIR_demo_NBD(para,ICs,maxtime);
-    [Classes] = SEIR_demo(para,ICs,maxtime);
+    [Classes] = SEIR_demo(para,ICs);
 
     % Find times where social distancing is enforced
     nx = size(Classes.SD,1);
@@ -110,9 +113,9 @@ for strat = 1:6
     %hold on
     %plot(Classes.t, Classes.IA(:,3)./sum(Classes.IA,2).*10000, 'g', 'LineWidth', 2.5)
     hold on
-    yline(para.Imax,':','Upper Threshold')
+    yline(para.Imax,':','Upper')
     hold on
-    yline(para.Imin,':','Lower Threshold')
+    yline(para.Imin,':','Lower')
     if strat > 4
         xlabel('Time (days)')
     end
