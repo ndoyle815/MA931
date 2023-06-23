@@ -14,7 +14,7 @@ load mats/Probabilities.mat
 % model parameters
 gamma = 1/7;                     % infectious period
 sigma = 1/5;                     % latency period
-omega = 1/200;                   % recovered period
+omega = 0*1/200;                 % recovered period
 tau = 0.25;                      % relative infectiousness of asymptomatic
 da = [0.05; 0.2; 0.7];           % probability of symptomatic infection
 N = 3.*[50000; 125000; 40000];   % population structure
@@ -39,7 +39,7 @@ thresholds = [1500 6000; 1000 2000; 2000 4000; 4000 6000; 1000 8000; 4000 8000];
 figure('Position',[400 400 1000 1000])
 
 tic
-for strat = 1:6
+for strat = strategies
     % Define model parameters as a structure
     para = struct('beta',beta,'gamma',gamma,'sigma',sigma,'omega',omega,'tau',tau, ...
                   'da',da,'N',N,'n',n,'strategy',strat,'init',0,'maxtime',t_init, ...

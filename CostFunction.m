@@ -17,9 +17,9 @@ function F = CostFunction(weights, para0, para)
 % use post-processor to compute metrics of interest
 [Peak_incidence, Peak_hospital, FinalSize, FinalHospital, Last_lockdown, Days_lockdown, NPhases, nx] = PostProcessor(Prelim, Classes, para, para0.maxtime);
 
-Burden = weights(1)*Peak_hospital;
-Stringency = weights(2)*Days_lockdown;
+Burden = FinalHospital/sum(para.N);
+Stringency = (0.7*Days_lockdown/para.maxtime)^2;
 
 [Burden, Stringency]
 
-F = Burden + Stringency;
+F = weights(1)*Burden + weights(2)*Stringency;
