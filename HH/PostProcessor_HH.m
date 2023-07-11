@@ -8,8 +8,12 @@ nx = size(Classes.SD,1);
 % Compute daily new infections, hospitalisations and deaths
 death_rates = [0.001; 0.01; 0.1];
 
-DL = 0;
+% append SD for lockdown computation if we end in a restriction
+if Classes.SD(end,1) ~= 0
+    Classes.SD(end+2,:) = [Classes.t(end) 0];
+end
 
+DL = 0;
 for i = 1:4:nx
     DL = DL + Classes.SD(i+2,1) - Classes.SD(i,1);
 end

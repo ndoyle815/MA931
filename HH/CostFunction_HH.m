@@ -20,6 +20,6 @@ function [F, FinalHospital, Days_lockdown] = CostFunction_HH(weights, para0, par
 Burden = FinalHospital/sum(para.N);
 Stringency = 0.5*(0.7*Days_lockdown/para.maxtime)^2;
 
-[Burden, Stringency, Peak_hospital]
+[Burden, Stringency, Peak_hospital];
 
 F = weights(1)*Burden + weights(2)*Stringency + exp(weights(3)*(Peak_hospital-Hc));
