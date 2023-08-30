@@ -1,21 +1,29 @@
 % function to retrieve epidemiological metrics from simulation output
 
-function [Peak_incidence, Peak_hospital, FinalSize, FinalHospital, Last_lockdown, Days_lockdown, NPhases, nx] = PostProcessor_HH(Classes)
-
-% Find times where social distancing is enforced
-nx = size(Classes.SD,1);
+function [Peak_incidence, Peak_hospital, FinalSize, FinalHospital, Last_lockdown, Days_lockdown, Days_Tier2, NLockdowns, nx, DL, DT2] = PostProcessor_HH(Classes)
 
 % Compute daily new infections, hospitalisations and deaths
 death_rates = [0.001; 0.01; 0.1];
+
+% Find times where social distancing is enforced
+nx = size(Classes.SD,1);
+ix1 = find(Classes.SD(:,2)==1);
+ix2 = find(Classes.SD(:,2)==2);
 
 % append SD for lockdown computation if we end in a restriction
 if Classes.SD(end,1) ~= 0
     Classes.SD(end+2,:) = [Classes.t(end) 0];
 end
 
-DL = 0;
-for i = 1:4:nx
-    DL = DL + Classes.SD(i+2,1) - Classes.SD(i,1);
+j2 = 1;
+j1 = 1;
+for i = ix2'
+    DL(j2) = Classes.SD(i+2,1) - Classes.SD(i,1);
+    j2 = j2 + 1;
+end
+for i = ix1'
+    DT2(j1) = Classes.SD(i+2,1) - Classes.SD(i,1);
+    j1 = j1 + 1;
 end
 
 % Compute metrics
@@ -25,9 +33,10 @@ FinalSize = round(sum(Classes.Cases(end,:)));
 FinalHospital = round(sum(Classes.Hosp(end,:)));
 FinalDeaths = round(Classes.Cases(end,:)*death_rates);
 Last_lockdown = round(Classes.SD(end,1));
-Days_lockdown = round(DL);
-NPhases = ceil(nx/2);
+Days_lockdown = round(sum(DL));
+Days_Tier2 = round(sum(DT2));
+NLockdowns = length(find(Classes.SD(:,2)==2));
     
 % save metrics to table
-save("../mats/PostProcess_metrics.mat","Days_lockdown","Last_lockdown","NPhases","Peak_incidence","Peak_hospital", ...
+save("../mats/PostProcess_metrics.mat","Days_lockdown","Last_lockdown","NLockdowns","Peak_incidence","Peak_hospital", ...
     "FinalSize","FinalHospital","FinalDeaths")

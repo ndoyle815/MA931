@@ -1,12 +1,12 @@
 % basic cost function to evaluate
 
 % weights: (w1,w2) determine how we weigh disease burden and lockdown
-% stringency components
+% stringency component
 % para0: ODE parameter set for preliminary run
 % para: ODE parameter set for main simulation
 % NB: thresholds defined as para.Imin, para.Imax in para
 
-function F = CostFunction(weights, para0, para)
+function [F, FinalHospital, Days_lockdown] = CostFunction(weights, para0, para, Hc)
 
 % run preliminary simulation to get ICs
 [Prelim, ICs] = Get_ICs(para0);
@@ -18,8 +18,8 @@ function F = CostFunction(weights, para0, para)
 [Peak_incidence, Peak_hospital, FinalSize, FinalHospital, Last_lockdown, Days_lockdown, NPhases, nx] = PostProcessor(Prelim, Classes, para, para0.maxtime);
 
 Burden = FinalHospital/sum(para.N);
-Stringency = (0.7*Days_lockdown/para.maxtime)^2;
+Stringency = 0.5*(0.7*Days_lockdown/para.maxtime)^2;
 
-[Burden, Stringency]
+[Burden, Stringency, Peak_hospital];
 
-F = weights(1)*Burden + weights(2)*Stringency;
+F = weights(1)*Burden + weights(2)*Stringency + exp(weights(3)*(Peak_hospital-Hc));

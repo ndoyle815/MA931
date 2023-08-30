@@ -4,7 +4,7 @@
 function [Prelim, Prelim_ICs] = Get_ICs(para)
 
 % Define trivial initial conditions as a structure
-E0 = 0.01;  % initial exposed
+E0 = 0.0025;  % initial exposed
 ICs = struct('S',(1-E0).*para.N, 'E1',E0.*para.N, 'E2',zeros(para.n,1), 'E3',zeros(para.n,1), ...
              'IS',zeros(para.n,1), 'IA',zeros(para.n,1), 'R',zeros(para.n,1), 'Cases',zeros(para.n,1));
 

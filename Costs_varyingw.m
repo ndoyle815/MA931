@@ -10,34 +10,32 @@ set(0,'defaultaxesfontsize',16)
 % model parameters
 gamma = 1/7;                     % infectious period
 sigma = 1/5;                     % latency period
-omega = 1/800;                   % recovered period
-red = 4/3;
+omega = 0*1/200;                 % recovered period
 tau = 0.25;                      % relative infectiousness of asymptomatic
 da = [0.05; 0.2; 0.7];           % probability of symptomatic infection
 N = 2.*[50000; 125000; 40000];   % population structure
 n = size(N,1);                   % number of age classes
 atrisk_prop = N(end)/sum(N);     % at-risk proportion of population
-bedsper1000 = 2.5;               % UK hospital beds per 1,000 population
-Hmax = bedsper1000*sum(N)/1000;  % capacity
-strat = 0;
+strat = 1;
 
 % transmission matrix
-beta = 0.7.*[1.709, 0.458, 0.033; 0.497, 0.900, 0.073; 0.156, 0.374, 0.383];
+%beta = 1.0.*[1.35, 2.41, 0.3; 0.93, 3.01, 0.54; 0.35, 1.64, 1.21].*gamma;
+beta = 0.8.*[1.709, 0.458, 0.033; 0.497, 0.900, 0.073; 0.156, 0.374, 0.383];
 
 % Define time to run model for
 t_init = 30;    % preliminary run
-maxtime = 800;  % main simulation
+maxtime = 365;  % main simulation
 
 % Define model parameters as a structure
-para0 = struct('beta',beta,'gamma',gamma,'sigma',sigma,'omega',omega,'tau',tau,'da',da,...
-               'N',N,'n',n,'strategy',strat,'init',0,'maxtime',t_init,'tgap',18,'tdelay',3,...
-               'tdiff',7,'hosp_rates',[0.1; 0.15; 0.3],'epsilon',1/8,'delta',1/10,'rho',0.1,'red',red);
+para0 = struct('beta',beta,'gamma',gamma,'sigma',sigma,'omega',omega,'tau',tau, ...
+               'da',da,'N',N,'n',n,'strategy',strat,'init',0,'maxtime',t_init, ...
+               'tgap',9,'tdelay',5);
 
 % dummy thresholds to allow infections to build with no intervention
-para0.U12 = 20000;
-para0.U01 = 20000;
-para0.L10 = 20000;
-para0.L21 = 20000;
+para0.Imin = 20000;
+para0.Imax = 20000;
+para0.Imin_risk = para0.Imin*atrisk_prop;
+para0.Imax_risk = para0.Imax*atrisk_prop;
 
 % add control thresholds defined by strategy
 para = para0;
@@ -46,65 +44,50 @@ para.maxtime = maxtime;
 
 % define strategy numbers and thresholds
 strategies = [1:6];
-thresholds = [50 150 100 700; 50 150 100 200; 100 300 400 550; 150 250 350 450; 50 300 400 500; 300 600 400 700];
+%thresholds = [1500 6000; 1000 2000; 2000 4000; 4000 6000; 1000 8000; 4000 8000];
+thresholds = [1000 6000; 500 1500; 1000 3000; 2500 4500; 500 7000; 3000 7000];
 
 % define functional weights
 %weights = [0.5, 0.5, 0.1; 0.8, 0.2, 0.1; 1, 0, 0.1];
-weights = [0:0.05:1];
-w3 = 2;
-Hc = 1500;
+weights = [0:0.02:1];
+w3 = 0.1;
+Hc = 200;
 
 ns = length(strategies);
 nw = length(weights);
 
 % stores cost function outputs
 fs = zeros(ns,nw);
+hs = zeros(ns,1);
+dls = zeros(ns,1);
 
 tic
-for strat = strategies
-    % set switching thresholds
-    para.L10 = thresholds(strat,1);
-    para.U01 = thresholds(strat,2);
-    para.L21 = thresholds(strat,3);
-    para.U12 = thresholds(strat,4);
+for w = 1:nw
+    for strat = strategies
+        para.Imin = thresholds(strat,1);
+        para.Imax = thresholds(strat,2);
+        para.Imin_risk = para.Imin*atrisk_prop;
+        para.Imax_risk = para.Imax*atrisk_prop;
 
-    % run preliminary simulation to get ICs
-    [Prelim, ICs] = Get_ICs_HH(para0);
-
-    % Run main simulation
-    [Classes] = SEIR_demo_2phasesHH(para,ICs);
-
-    % use post-processor to compute metrics of interest
-    [~, Peak_hospital, ~, FinalHospital, ~, Days_lockdown, Days_Tier2, ~, ~, DL, DT2] = PostProcessor_HH(Classes);
-    
-    for w = 1:nw
         % evaluate cost function
-        fs(strat,w) = CostFunction_HH([weights(w), 1-weights(w), w3], para, Hc, Peak_hospital, FinalHospital, Days_lockdown, Days_Tier2, DL, DT2);
+        [fs(strat,w),hs(strat),dls(strat)] = CostFunction([weights(w), 1-weights(w), w3], para0, para, Hc);
     end
 end
 toc
 
 fs;
-[~,idx] = min(fs);
-[sorted, ii] = sort(fs);
-[~,rank] = sort(ii);
+[~,idx] = min(fs)
 
-
-figure('Position',[600 600 1000 400])
-hold on
-for strat = strategies
-    plot(weights,rank(strat,:),'-o','MarkerFaceColor','k')
-end
-hold off
-set(gca, 'YDir','reverse')
+figure(1)
+%plot(weights,idx,'b')
+scatter(weights,idx,30,'b','filled')
 axis([0 1 0.5 6.5])
-xlabel('$w_1 \; (w_2 = 1 - w_1)$')
-ylabel('Strategy Ranking')
-legend({'S1','S2','S3','S4','S5','S6'},'Interpreter','Latex','Location','eastoutside','FontSize',16)
-title(strcat('Hc = ',' ',num2str(Hc),', ',' maxtime =  ',' ',num2str(maxtime)))
+xlabel('w1 (w2 = 1 - w1)')
+ylabel('Optimal strategy')
+title(strcat('Cost function, Hc =  ',num2str(Hc)))
 grid on
 
-saveas(gcf,strcat('../images/CostFunction_',num2str(Hc),'_',num2str(maxtime),'.png'))
+saveas(gcf,strcat('./images/CostFunction_',num2str(Hc),'.png'))
 
 
 % Hpeaks = [252, 164, 164, 241, 253, 339];

@@ -10,21 +10,22 @@ set(0,'defaultaxesfontsize',16)
 % model parameters
 gamma = 1/7;                     % infectious period
 sigma = 1/5;                     % latency period
-omega = 1/200;                   % recovered period
+omega = 0*1/200;                 % recovered period
 tau = 0.25;                      % relative infectiousness of asymptomatic
 da = [0.05; 0.2; 0.7];           % probability of symptomatic infection
-N = 3.*[50000; 125000; 40000];   % population structure
+N = 2.*[50000; 125000; 40000];   % population structure
 n = size(N,1);                   % number of age classes
 atrisk_prop = N(end)/sum(N);     % at-risk proportion of population
 strat = 1;
 
 % transmission matrix
 %load('./mats/contacts.mat')
-beta = 1.0.*[1.35, 2.41, 0.3; 0.93, 3.01, 0.54; 0.35, 1.64, 1.21].*gamma;
+%beta = 1.0.*[1.35, 2.41, 0.3; 0.93, 3.01, 0.54; 0.35, 1.64, 1.21].*gamma;
+beta = 0.7.*[1.709, 0.458, 0.033; 0.497, 0.900, 0.073; 0.156, 0.374, 0.383];
 
 % Define time to run model for
 t_init = 30;    % preliminary run
-maxtime = 600;  % main simulation
+maxtime = 500;  % main simulation
 
 % Define model parameters as a structure
 para0 = struct('beta',beta,'gamma',gamma,'sigma',sigma,'omega',omega,'tau',tau, ...
@@ -80,5 +81,8 @@ grid on
 saveas(gcf,strcat('./images/Strat_',num2str(thresholds(1)),'_',num2str(thresholds(2)),'.png'))
 
 % evaluate cost function
-weights = [0.5,0.5];
-F = CostFunction(weights, para0, para)
+weights = [0.5,0.5,0.1];
+F = CostFunction(weights, para0, para, 300)
+
+% evaluate R0
+R0 = Get_R0(para)
