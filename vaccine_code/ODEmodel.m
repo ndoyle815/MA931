@@ -1,30 +1,32 @@
 % ODE SEIR model code, taking in arguments
 % para: model parameters
 % ICs: initial conditions
+% control and vaccination incorporated at discrete timesteps
 
-function [Classes] = SEIR_demo_discretised_vacc2(para,ICs)
+function [Classes] = ODEmodel(para,ICs)
 
 %unpack ICs
 pop = zeros(1,12*para.n);
 pop(1,1:para.n) = ICs.S;
-pop(1,1*para.n+1:2*para.n) = ICs.E1;
-pop(1,2*para.n+1:3*para.n) = ICs.E2;
-pop(1,3*para.n+1:4*para.n) = ICs.E3;
-pop(1,4*para.n+1:5*para.n) = ICs.IA;
-pop(1,5*para.n+1:6*para.n) = ICs.IS;
-pop(1,6*para.n+1:7*para.n) = ICs.IPH;
-pop(1,7*para.n+1:8*para.n) = ICs.IH;
-pop(1,8*para.n+1:9*para.n) = ICs.RA;
-pop(1,9*para.n+1:10*para.n) = ICs.RS;
+pop(1,1*para.n+1:2*para.n)   = ICs.E1;
+pop(1,2*para.n+1:3*para.n)   = ICs.E2;
+pop(1,3*para.n+1:4*para.n)   = ICs.E3;
+pop(1,4*para.n+1:5*para.n)   = ICs.IA;
+pop(1,5*para.n+1:6*para.n)   = ICs.IS;
+pop(1,6*para.n+1:7*para.n)   = ICs.IPH;
+pop(1,7*para.n+1:8*para.n)   = ICs.IH;
+pop(1,8*para.n+1:9*para.n)   = ICs.RA;
+pop(1,9*para.n+1:10*para.n)  = ICs.RS;
 pop(1,10*para.n+1:11*para.n) = ICs.Cases;
 pop(1,11*para.n+1:12*para.n) = ICs.Hosp;
 pop(1,12*para.n+1:13*para.n) = ICs.V;
 
 %setup
 tn = 0;
-SD = [tn, para.init];
+SD = [tn, para.init];  % This class will record date and control index at every switch
 opts = odeset('RelTol',1e-6);%,'MaxStep',0.1);
 
+% number to be vaccinated
 Vmax = para.efficacy.*para.N';
 
 % the main iteration
@@ -49,13 +51,14 @@ while tn < para.maxtime
     end
     
 
-    % "social distancing" control: 70% decrease in contact rates if total infections
-    % above a given threshold
+    % "social distancing" control: 70% decrease in contact rates if hospital 
+    % occupancy is above a given threshold (lockdown) or a 40% decrease for softer
+    % restrictions and smaller thresholds (Intermediate Control)
     if SD(end,2) == 0
         para.factor = 1;
-        if sum(pop(end,7*para.n+1:8*para.n)) > para.U12 && tn - SD(end,1) >= para.tgap - para.tdiff
+        if sum(pop(end,7*para.n+1:8*para.n)) > para.T12 && tn - SD(end,1) >= para.tgap - para.tdiff
             SD(end+1,:) = [tn, 2.5];
-        elseif sum(pop(end,7*para.n+1:8*para.n)) > para.U01 && tn - SD(end,1) >= para.tgap - para.tdiff
+        elseif sum(pop(end,7*para.n+1:8*para.n)) > para.T01 && tn - SD(end,1) >= para.tgap - para.tdiff
             SD(end+1,:) = [tn, 0.5];
         end
     elseif SD(end,2) == 0.5
@@ -65,9 +68,9 @@ while tn < para.maxtime
         end
     elseif SD(end,2) == 1
         para.factor = 0.6;
-        if sum(pop(end,7*para.n+1:8*para.n)) > para.U12 && tn - SD(end,1) >= para.tgap - para.tdiff
+        if sum(pop(end,7*para.n+1:8*para.n)) > para.T12 && tn - SD(end,1) >= para.tgap - para.tdiff
             SD(end+1,:) = [tn, 1.5];
-        elseif sum(pop(end,7*para.n+1:8*para.n)) < para.L10 && tn - SD(end,1) >= para.tgap
+        elseif sum(pop(end,7*para.n+1:8*para.n)) < para.T10 && tn - SD(end,1) >= para.tgap
             SD(end+1,:) = [tn, 0.5];
         end
     elseif SD(end,2) == 1.5
@@ -77,7 +80,7 @@ while tn < para.maxtime
         end
     elseif SD(end,2) == 2
         para.factor = 0.3;
-        if sum(pop(end,7*para.n+1:8*para.n)) < para.L21 && tn - SD(end,1) >= para.tgap
+        if sum(pop(end,7*para.n+1:8*para.n)) < para.T21 && tn - SD(end,1) >= para.tgap
             SD(end+1,:) = [tn, 1.5];
         end
     elseif SD(end,2) == 2.5
@@ -100,8 +103,6 @@ while tn < para.maxtime
     tn = tn + 1;
 
 end
-
-%disp(para.nu_a)
 
 %Convert output to struct
 Classes = struct('S',pop(:,1:para.n),'E1',pop(:,para.n+1:2*para.n),'E2',pop(:,2*para.n+1:3*para.n), ...
@@ -129,17 +130,17 @@ V = pop(12*para.n+1 : 13*para.n);
 
 % ODE equations
 dS = -para.factor.*S.*(para.nu_a.*para.beta*(para.tau.*IA + IS + IPH + para.rho.*IH))./para.N + para.omega.*RS + para.red*para.omega.*RA;
-dE1 = para.factor.*S.*(para.nu_a.*para.beta*(para.tau.*IA + IS + IPH + para.rho.*IH))./para.N - 3*para.sigma.*E1;
-dE2 = 3*para.sigma.*E1 - 3*para.sigma.*E2;
-dE3 = 3*para.sigma.*E2 - 3*para.sigma.*E3;
-dIA = 3*para.sigma.*(1-para.da).*E3 - para.gamma.*IA;
-dIS = 3*para.sigma.*para.da.*(1-para.hosp_rates).*E3 - para.gamma.*IS;
-dIPH = 3*para.sigma.*para.da.*para.hosp_rates.*E3 - para.epsilon.*IPH;
-dIH = para.epsilon.*IPH - para.delta.*IH;
+dE1 = para.factor.*S.*(para.nu_a.*para.beta*(para.tau.*IA + IS + IPH + para.rho.*IH))./para.N - 3*para.epsilon.*E1;
+dE2 = 3*para.epsilon.*E1 - 3*para.epsilon.*E2;
+dE3 = 3*para.epsilon.*E2 - 3*para.epsilon.*E3;
+dIA = 3*para.epsilon.*(1-para.da).*E3 - para.gamma.*IA;
+dIS = 3*para.epsilon.*para.da.*(1-para.hosp_rates).*E3 - para.gamma.*IS;
+dIPH = 3*para.epsilon.*para.da.*para.hosp_rates.*E3 - para.zeta.*IPH;
+dIH = para.zeta.*IPH - para.delta.*IH;
 dRA = para.gamma.*(IA) - para.red*para.omega.*RA;
 dRS  = para.gamma.*(IS) + para.delta.*IH - para.omega.*RS;
-dCases = 3*para.sigma.*para.da.*E3;
-dHosp = para.epsilon.*IPH;
+dCases = 3*para.epsilon.*para.da.*E3;
+dHosp = para.zeta.*IPH;
 dV = [0; 0; 0];  % S and R individuals already moved in discretised manner
 
 dPop = [dS; dE1; dE2; dE3; dIA; dIS; dIPH; dIH; dRA; dRS; dCases; dHosp; dV];

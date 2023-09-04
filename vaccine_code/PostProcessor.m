@@ -1,6 +1,6 @@
 % function to retrieve epidemiological metrics from simulation output
 
-function [Peak_incidence, Peak_hospital, FinalSize, FinalHospital, Last_lockdown, Days_lockdown, Days_Tier2, NLockdowns, nx, DL, DT2] = PostProcessor_HH(Classes)
+function [Classes, Peak_incidence, Peak_hospital, FinalSize, FinalHospital, Last_lockdown, Days_lockdown, Days_Tier2, NLockdowns, nx, ix1, ix2, DL, DT2] = PostProcessor(Classes)
 
 % Compute daily new infections, hospitalisations and deaths
 death_rates = [0.001; 0.01; 0.1];

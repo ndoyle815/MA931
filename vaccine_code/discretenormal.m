@@ -2,12 +2,10 @@ function P = discretenormal(k, mu, sigma)
 
 % If the RV is Y this function returns P(Y=k) for a discrete analogue to
 % the normal distribution whose continuous derivative is ~ N(mu, sigma)
-% ks can be a float or array
-% 
+% ks can be a float or (sorted) array of integers
+
 % NB: Y will map to the desired RV for vaccine arrival date T by 
 % T = 180 + 60Y days
-
-% k must be sorted if an array
 
 n = length(k);
 P = zeros(1,n);

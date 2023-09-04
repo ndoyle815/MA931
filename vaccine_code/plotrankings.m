@@ -1,3 +1,5 @@
+% script to merge subplots for control strategy rankings without
+% vaccination into Figure 4 from report
 clear all
 
 %Plotting preferences
@@ -6,10 +8,10 @@ set(groot,'defaultAxesTickLabelInterpreter','latex')
 set(0,'defaultTextInterpreter','latex')
 set(0,'defaultaxesfontsize',22)
 
-A1 = load('StratRankings_1500_500.mat');
-A2 = load('StratRankings_1500_1000.mat');
-A3 = load('StratRankings_1500_1500.mat');
-A4 = load('StratRankings_1075_1000.mat');
+A1 = load('./mats/StratRankings_1500_500.mat');
+A2 = load('./mats/StratRankings_1500_1000.mat');
+A3 = load('./mats/StratRankings_1500_1500.mat');
+A4 = load('./mats/StratRankings_1075_1000.mat');
 
 Ranks(:,:,1) = A1.rank;
 Ranks(:,:,2) = A2.rank;
@@ -21,11 +23,8 @@ weights = [0.6:0.01:1];
 cols = [0.9290 0.6940 0.1250; 0.3290, 0.6940, 0.1250; 0.4940 0.1840 0.5560; 0 0.5470 0.9410];
 
 figure('Position',[600 600 800 1200])
-%[1+2,4+5,7+8,10+11]
-%[1:3,5:7,9:11,13:15]
+
 for k = 1:4
-    %subplot(4,3,[3*k-2,3*k-1])
-    %subplot(4,4,[4*k-3,4*k-1])
     subplot(4,1,k)
     hold on
     for strat = 1:4
@@ -45,12 +44,4 @@ for k = 1:4
     grid on
 end
 
-% add a bit space to the figure
-%fig = gcf;
-%fig.Position(3) = fig.Position(3) + 100;
-% add legend
-%Lgnd = legend({'S1 (Cautious Easing)','S2 (Suppression)','S3 (Slow Control)','S4 (Rapid Control)'},'Interpreter','Latex','Location','eastoutside','FontSize',20);
-%Lgnd.Position(1) = 0.72;
-%Lgnd.Position(2) = 0.5;
-
-saveas(gcf,'../Costoutputs.png')
+saveas(gcf,'./vacc_images/Costoutputs.png')
