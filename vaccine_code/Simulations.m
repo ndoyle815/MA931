@@ -14,7 +14,7 @@ para0 = load('./mats/Parameters.mat');
 % vaccination start times
 vstart_times = [180:60:1080];
 vstarts = [2*max(vstart_times), 360];
-
+vstarts = 2160;
 % Define time to run model for
 t_init = 30;    % preliminary run
 maxtime = 800;  % main simulation
@@ -24,7 +24,7 @@ thresholds = [50 150 100 700; 50 150 100 200; 150 350 500 650; 275 350 425 500];
 strategies = [1:length(thresholds)];
 
 % plotting preperation
-figure('Position',[200 400 1000 1000])
+figure('Position',[200 400 500*length(vstarts) 1000])
 stratnames = {'S1 (Cautious easing)', 'S2 (Suppression)', 'S3 (Slow control)', 'S4 (Rapid control)'};
 stpos = [50 200 350 700; 50 200 350 500; 150 350 500 650; 175 325 475 625];
 
@@ -65,12 +65,13 @@ for vs = 1:length(vstarts)
         % Post-Process for epidemic metrics
         [Classes, ~, Peak_hospital, ~, FinalHospital, ~, Days_lockdown, Days_Tier2, ~, nx, ix1, ix2, ~, ~] = PostProcessor(Classes);
 
-        plotidx = 2*(strat-1)+vs;  % index for subfigure
+        plotidx = length(vstarts)*(strat-1)+vs;  % index for subfigure
 
         % plotting
-        subplot(4,2,plotidx)
+        subplot(4,length(vstarts),plotidx)
         yyaxis left
         ax1 = gca;
+        ax1.Position(1) = ax1.Position(1) + 0.04;
         ax1.YColor = 'k';
         ax1.FontSize = 16;
         ax1.FontSizeMode = 'manual';
@@ -84,7 +85,7 @@ for vs = 1:length(vstarts)
             hold on
         end
         plot(Classes.t, sum(Classes.IH,2), 'k', 'LineWidth', 2.5)
-        if plotidx == 2
+        if plotidx == length(vstarts)
             xline(para.vstart,'-','Vaccine Arrival','Color','b','Linewidth',2,'FontSize',14,'Interpreter','latex','LabelOrientation','horizontal')
         else
             xline(para.vstart,'-','Color','b','Linewidth',2)
@@ -92,13 +93,13 @@ for vs = 1:length(vstarts)
         
         axis([0 maxtime 0 max([para.Hmax,1200])])
     
-        if plotidx > 6
+        if plotidx > length(vstarts)*3
             xlabel('Time (days)')
         end
-        if mod(plotidx,2) == 1
+        %if mod(plotidx,2) == 1
             label_y = ylabel('$I^H(t)$','Rotation',0);
-            label_y.Position(1) = label_y.Position(1) - 40;
-        end
+            label_y.Position(1) = label_y.Position(1) - 0;
+        %end
     
         yyaxis right
 
@@ -118,6 +119,7 @@ for vs = 1:length(vstarts)
         end
         axis([0 maxtime 0 max([para.Hmax,1200])])
         ax2 = gca;
+        ax2.Position(3) = ax2.Position(3) - 0.02;
         ax2.YColor = 'k';
         ax2.TickDir = 'none';
         ax2Y = ax2.YAxis(2,1);
@@ -139,7 +141,7 @@ saveas(gcf,strcat('./vacc_images/','vacc2_',num2str(para.vstart),'.png'))
 
 % Plotting cumulative vaccinations
 f = figure(2);
-f.Position = [1250 400 600 400];
+f.Position = [1250 400 600 500];
 plot(Classes.t, Classes.V(:,1)./1000, 'LineWidth', 2.5, 'DisplayName', '0-19')
 hold on
 plot(Classes.t, Classes.V(:,2)./1000, 'LineWidth', 2.5, 'DisplayName', '20-64')
@@ -155,3 +157,5 @@ ylabel('Population (thousands)')
 title('Cumulative Vaccinations')
 legend('Interpreter','latex','Location','west')
 grid on
+
+saveas(gcf,'./vacc_images/Tvacc.png')

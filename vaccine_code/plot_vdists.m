@@ -20,32 +20,32 @@ vdist_pois5 = discretenormal([0:length(vtimes)-1], 7.5, 1.5);
 vdist_pois6 = discretenormal([0:length(vtimes)-1], 7.5, 2);
 
 
-f = figure(1);
-f.Position = [600 600 600 600];
-%sgtitle('Vaccine arrival date distributions','FontSize',18)
-
 % mu varying, sigma fixed
-subplot(2,1,1)
+f = figure(1);
+f.Position = [400 600 600 300];
 bar(vtimes,[vdist_pois1; vdist_pois2; vdist_pois3],1,"grouped",'FaceAlpha',0.8)
 xticks([180:120:1080])
 xtickangle(0)
 axis([120 1140 0 0.3])
-%xlabel('Vaccination arrival time (days)')
+xlabel('Vaccination arrival time (days)')
 ylabel('Probability')
-title('Variance fixed, $\sigma=1.5$')
+%title('Variance fixed, $\sigma=1.5$')
 legend('$\mu=3$','$\mu=7.5$','$\mu=12$','Interpreter','latex','Location','eastoutside')
 grid on
 
+saveas(gcf,'./vacc_images/vaccdists_mu.png')
+
 % mu fixed, varying sigma
-subplot(2,1,2)
+f = figure(2);
+f.Position = [1200 600 600 300];
 bar(vtimes,[vdist_pois4; vdist_pois5; vdist_pois6],1,"grouped",'FaceAlpha',0.8)
 xticks([180:120:1080])
 xtickangle(0)
 axis([120 1140 0 0.45])
 xlabel('Vaccination arrival time (days)')
 ylabel('Probability')
-title('Mean fixed, $\mu=7.5$')
+%title('Mean fixed, $\mu=7.5$')
 legend('$\sigma=1$','$\sigma=1.5$','$\sigma=2$','Interpreter','latex','Location','eastoutside')
 grid on
 
-saveas(gcf,'./vacc_images/vaccdists.png')
+saveas(gcf,'./vacc_images/vaccdists_sigma.png')
