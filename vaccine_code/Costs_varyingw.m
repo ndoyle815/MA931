@@ -17,7 +17,7 @@ vstarts = [2*max(vstart_times), 360];
 
 % Define time to run model for
 t_init = 30;    % preliminary run
-maxtime = 500;  % main simulation
+maxtime = 1000;  % main simulation
 
 % define strategy numbers and switching thresholds
 thresholds = [50 150 100 700; 50 150 100 200; 150 350 500 650; 275 350 425 500];
@@ -27,7 +27,7 @@ strategies = [1:length(thresholds)];
 para = para0;
 para.init = 1;
 para.maxtime = maxtime;
-para.Hmax = 1500;        % modify hospital capacity
+para.Hmax = 1075;        % modify hospital capacity
 
 % define functional weights
 weights = [0.6:0.01:1];  % varying w1, w2 = 1 - w1
@@ -70,7 +70,7 @@ toc
 % Plotting
 cols = [0.9290 0.6940 0.1250; 0.3290, 0.6940, 0.1250; 0.4940 0.1840 0.5560; 0 0.5470 0.9410];
 
-figure('Position',[600 600 750 250])
+figure('Position',[600 600 600 200])
 hold on
 for strat = strategies
     plot(weights,rank(strat,:),'-o','Color',cols(strat,:),'MarkerSize',6,'MarkerFaceColor',cols(strat,:))
@@ -80,9 +80,9 @@ set(gca, 'YDir','reverse')
 axis([min(weights) max(weights) 0.5 4.5])
 xticks([0.6:0.1:1])
 xlabel('$w_1 \; (w_2 = 1 - w_1)$')
-ylabel('Strategy Ranking')
+ylabel('Ranking')
 if para.Hmax < 1400
-    legend({'S1 (Cautious Easing)','S2 (Suppression)','S3 (Slow Control)','S4 (Rapid Control)'},'Interpreter','Latex','Location','east','FontSize',16)
+    legend({'S1 (Cautious Easing)','S2 (Suppression)','S3 (Slow Control)','S4 (Rapid Control)'},'Interpreter','Latex','Location','east','FontSize',14)
 end
 %title(strcat('$H_c$ = ',{' '},num2str(para.Hmax),', ',' maxtime =  ',{' '},num2str(maxtime)))
 grid on

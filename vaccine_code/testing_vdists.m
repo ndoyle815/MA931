@@ -81,14 +81,15 @@ toc
 set(0,'defaultaxesfontsize',18)
 
 f = figure(1);
-f.Position = [100 400 1500 500];
+f.Position = [100 400 1200 400];
 
 cols = [0.9290 0.6940 0.1250; 0.3290, 0.6940, 0.1250; 0.4940 0.1840 0.5560; 0 0.5470 0.9410];
 
 subplot(1,3,[1 2])
 ax = gca;
-ax.Position(2) = ax.Position(2) + 0.06;
-ax.Position(1) = ax.Position(1) - 0.06;
+ax.Position(2) = ax.Position(2) + 0.1;
+ax.Position(1) = ax.Position(1) - 0.03;
+ax.Position(4) = ax.Position(4) - 0.025;
 
 for strat = strategies
     fstrat = fs(:,:,strat);
@@ -122,9 +123,9 @@ for strat = strategies
     end
 end
 yticks([1:10:nw])
-xticks([1:6:nv])
-yticklabels(weights(1:10:end))
-xticklabels(vstart_times(1:6:end))
+xticks([1:12:nv])
+yticklabels(weights(1:10:end-5))
+xticklabels(vstart_times(1:12:end))
 ylim([1 nw])
 xlim([1 nv])
 label_y = ylabel('Weight $w_1$');
@@ -138,9 +139,9 @@ zlabel('Cost')
 
 subplot(1,3,3)
 ax = gca;
-%ax.Position(1) = ax.Position(1) + 0.03;
+ax.Position(1) = ax.Position(1) + 0.03;
 ax.Position(2) = ax.Position(2) + 0.06;
-ax.Position(4) = ax.Position(4) - 0.1;
+ax.Position(4) = ax.Position(4) - 0.02;
 
 for strat = strategies
     fstrat = fs(:,:,strat);
@@ -177,10 +178,10 @@ end
 view([0 270])
 f.CurrentAxes.YDir = 'Reverse';
 yticks([1:10:nw])
-xticks([1:12:nv])
+xticks([1:18:nv])
 xtickangle(0)
 yticklabels(weights(1:10:end))
-xticklabels(vstart_times(1:12:end))
+xticklabels(vstart_times(1:18:end))
 ylim([1 nw])
 xlim([1 nv])
 ylabel('Weight $w_1$')

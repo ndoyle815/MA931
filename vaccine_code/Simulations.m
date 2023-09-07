@@ -14,7 +14,7 @@ para0 = load('./mats/Parameters.mat');
 % vaccination start times
 vstart_times = [180:60:1080];
 vstarts = [2*max(vstart_times), 360];
-vstarts = 2160;
+vstarts = 360;
 % Define time to run model for
 t_init = 30;    % preliminary run
 maxtime = 800;  % main simulation
@@ -141,7 +141,7 @@ saveas(gcf,strcat('./vacc_images/','vacc2_',num2str(para.vstart),'.png'))
 
 % Plotting cumulative vaccinations
 f = figure(2);
-f.Position = [1250 400 600 500];
+f.Position = [1250 400 600 400];
 plot(Classes.t, Classes.V(:,1)./1000, 'LineWidth', 2.5, 'DisplayName', '0-19')
 hold on
 plot(Classes.t, Classes.V(:,2)./1000, 'LineWidth', 2.5, 'DisplayName', '20-64')
