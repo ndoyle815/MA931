@@ -140,8 +140,8 @@ zlabel('Cost')
 subplot(1,3,3)
 ax = gca;
 ax.Position(1) = ax.Position(1) + 0.03;
-ax.Position(2) = ax.Position(2) + 0.06;
-ax.Position(4) = ax.Position(4) - 0.02;
+ax.Position(2) = ax.Position(2) + 0.12;
+ax.Position(4) = ax.Position(4) - 0.12;
 
 for strat = strategies
     fstrat = fs(:,:,strat);

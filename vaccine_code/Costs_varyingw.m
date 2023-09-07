@@ -17,7 +17,7 @@ vstarts = [2*max(vstart_times), 360];
 
 % Define time to run model for
 t_init = 30;    % preliminary run
-maxtime = 1000;  % main simulation
+maxtime = 500;  % main simulation
 
 % define strategy numbers and switching thresholds
 thresholds = [50 150 100 700; 50 150 100 200; 150 350 500 650; 275 350 425 500];
@@ -27,7 +27,7 @@ strategies = [1:length(thresholds)];
 para = para0;
 para.init = 1;
 para.maxtime = maxtime;
-para.Hmax = 1075;        % modify hospital capacity
+para.Hmax = 1500;        % modify hospital capacity
 
 % define functional weights
 weights = [0.6:0.01:1];  % varying w1, w2 = 1 - w1
@@ -79,6 +79,7 @@ hold off
 set(gca, 'YDir','reverse')
 axis([min(weights) max(weights) 0.5 4.5])
 xticks([0.6:0.1:1])
+yticks([1,2,3,4])
 xlabel('$w_1 \; (w_2 = 1 - w_1)$')
 ylabel('Ranking')
 if para.Hmax < 1400
